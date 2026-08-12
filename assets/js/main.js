@@ -261,6 +261,10 @@
       });
     });
 
+    // _next needs an absolute URL; resolve it against wherever the page is served from
+    var next = $('input[data-next]', form);
+    if (next) next.value = new URL(next.getAttribute('data-next'), location.href).href;
+
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!validate(form)) return;
@@ -269,36 +273,63 @@
       var label = btn ? (btn.getAttribute('data-label') || btn.textContent) : '';
       if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
 
-      var data = new FormData(form);
-      data.append('_subject', 'Website enquiry — Aquila Water Leak Detection');
-      data.append('_template', 'table');
-      data.append('_captcha', 'false');
+      function restore() { if (btn) { btn.disabled = false; btn.textContent = label; } }
+
+      /* Last resort: submit the form for real. form.submit() does not re-fire
+         this handler, so it can't loop. The browser navigates away and the
+         relay's own page takes over — the enquiry still gets through. */
+      function nativeSubmit() {
+        showFormMsg(form, 'ok', '<strong>Sending your enquiry…</strong>');
+        form.submit();
+      }
 
       fetch(FORM_ENDPOINT, {
         method: 'POST',
-        body: data,
+        body: new FormData(form),
         headers: { 'Accept': 'application/json' }
       })
         .then(function (res) {
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          return res.json().catch(function () { return {}; });
+          return res.json()
+            .catch(function () { return {}; })
+            .then(function (json) { return { ok: res.ok, status: res.status, json: json }; });
         })
-        .then(function (json) {
-          if (json && json.success === 'false') throw new Error(json.message || 'rejected');
-          form.reset();
-          showFormMsg(form, 'ok',
-            '<strong>Thanks — your enquiry is on its way.</strong><br>' +
-            'We\'ll be in touch on the next business day. If it\'s urgent, call ' +
-            '<a href="tel:0413336880">' + CONTACT_PHONE + '</a>.');
+        .then(function (r) {
+          var msg = (r.json && (r.json.message || r.json.error)) || '';
+
+          // The relay accepted it
+          if (r.ok && (!r.json || r.json.success !== 'false')) {
+            form.reset();
+            showFormMsg(form, 'ok',
+              '<strong>Thanks — your enquiry is on its way.</strong><br>' +
+              'We\'ll be in touch on the next business day. If it\'s urgent, call ' +
+              '<a href="tel:0413336880">' + CONTACT_PHONE + '</a>.');
+            restore();
+            return;
+          }
+
+          // The relay is waiting on the owner to confirm the destination address.
+          // That is a setup step, not a failure by the person filling the form in.
+          if (/confirm|activat|verif/i.test(msg)) {
+            console.warn('[aquila] Form relay is not activated yet. ' +
+                         'Check ' + CONTACT_EMAIL + ' for the activation email. Relay said: ' + msg);
+            showFormMsg(form, 'warn',
+              '<strong>Almost there — this form needs activating.</strong><br>' +
+              'Your details haven\'t reached us yet. Please call ' +
+              '<a href="tel:0413336880">' + CONTACT_PHONE + '</a> or ' +
+              '<a href="' + mailtoFallback(form) + '">email us instead</a> — your answers are already filled in.');
+            restore();
+            return;
+          }
+
+          console.warn('[aquila] Relay rejected the submission (HTTP ' + r.status + '): ' + msg +
+                       ' — retrying as a native form POST.');
+          nativeSubmit();
         })
-        .catch(function () {
-          showFormMsg(form, 'err',
-            '<strong>That didn\'t send.</strong><br>' +
-            'Something went wrong on the way out — please call <a href="tel:0413336880">' + CONTACT_PHONE + '</a>, ' +
-            'or <a href="' + mailtoFallback(form) + '">send it as an email instead</a> (your answers are already filled in).');
-        })
-        .then(function () {
-          if (btn) { btn.disabled = false; btn.textContent = label; }
+        .catch(function (err) {
+          // Network error, CORS block, ad blocker, offline. A native POST is
+          // subject to none of those, so try it before giving up.
+          console.warn('[aquila] fetch submit failed (' + err.message + ') — retrying as a native form POST.');
+          nativeSubmit();
         });
     });
   });
