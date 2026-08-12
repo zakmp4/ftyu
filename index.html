@@ -380,7 +380,13 @@
     <div class="contact-cta" id="contact">
       <h2>Suspect a leak?<br><span class="accent">Get it checked today.</span></h2>
       <p>Don't wait until minor leaks become major problems. Book an inspection with our friendly team.</p>
-      <form data-contact novalidate>
+      <!-- Posts natively to FormSubmit if JS is off or the fetch fails.
+           The endpoint is also set in assets/js/main.js — change both to move relay. -->
+      <form data-contact novalidate method="POST" action="https://formsubmit.co/admin@aquilaleakdetection.com.au">
+        <input type="hidden" name="_subject" value="Website enquiry — Aquila Water Leak Detection">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_next" data-next="thank-you.html" value="">
         <div class="form-row">
           <div class="field"><label for="h-name">Your name</label><input id="h-name" type="text" name="name" autocomplete="name" placeholder="Jane Smith" required></div>
           <div class="field"><label for="h-phone">Phone</label><input id="h-phone" type="tel" name="phone" autocomplete="tel" placeholder="0400 000 000" required></div>
