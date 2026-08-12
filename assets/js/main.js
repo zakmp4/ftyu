@@ -178,7 +178,7 @@
      below. Click the link in it once and every later enquiry arrives
      automatically.
      ====================================================================== */
-  var CONTACT_EMAIL  = 'admin@aquilaleakdetection.com.au';
+  var CONTACT_EMAIL  = 'admin@aquilawaterleakdetection.com.au';
   var FORM_ENDPOINT  = 'https://formsubmit.co/ajax/' + CONTACT_EMAIL;
   var CONTACT_PHONE  = '0413 336 880';
 
