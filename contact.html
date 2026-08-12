@@ -131,7 +131,13 @@
     <div class="contact-cta">
       <h2>Book an inspection</h2>
       <p>Fill this in and we'll be in touch on the next business day to confirm a time.</p>
-      <form data-contact novalidate>
+      <!-- Posts natively to FormSubmit if JS is off or the fetch fails.
+           The endpoint is also set in assets/js/main.js — change both to move relay. -->
+      <form data-contact novalidate method="POST" action="https://formsubmit.co/admin@aquilaleakdetection.com.au">
+        <input type="hidden" name="_subject" value="Website enquiry — Aquila Water Leak Detection">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_next" data-next="thank-you.html" value="">
         <div class="form-row">
           <div class="field"><label for="c-name">Your name *</label><input id="c-name" type="text" name="name" autocomplete="name" placeholder="Jane Smith" required></div>
           <div class="field"><label for="c-phone">Phone *</label><input id="c-phone" type="tel" name="phone" autocomplete="tel" placeholder="0400 000 000" required></div>
