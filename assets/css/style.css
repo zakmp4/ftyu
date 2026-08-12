@@ -570,6 +570,9 @@ button[type=submit][disabled]{opacity:.65;cursor:progress;}
 .form-msg.err{
   background:rgba(229,118,108,.12);border:1px solid rgba(229,118,108,.5);color:#ffc9c2;
 }
+.form-msg.warn{
+  background:rgba(230,170,60,.13);border:1px solid rgba(230,170,60,.5);color:#f4d9a4;
+}
 .form-msg a{color:#8fd0ff;font-weight:600;text-decoration:underline;text-underline-offset:2px;}
 
 .contact-info{
